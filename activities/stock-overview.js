@@ -23,15 +23,15 @@ module.exports = async (activity) => {
     // Get the stock history chart for past month
     promises.push(api(`/stock/${symbol}/chart/1m?token=${token}`));
 
-    /*promises.push(api(`/stock/${symbol}/chart/3m?token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/3m?chartInterval=5&token=${token}`));
 
-    promises.push(api(`/stock/${symbol}/chart/6m?token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/6m?chartInterval=10&token=${token}`));
 
-    promises.push(api(`/stock/${symbol}/chart/ytd?token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/ytd?chartInterval=10&token=${token}`));
 
-    promises.push(api(`/stock/${symbol}/chart/1y?token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/1y?chartInterval=15&token=${token}`));
 
-    promises.push(api(`/stock/${symbol}/chart/5y?token=${token}`));*/
+    promises.push(api(`/stock/${symbol}/chart/5y?chartInterval=75&token=${token}`));
 
     const responses = await Promise.all(promises);
 
@@ -42,7 +42,7 @@ module.exports = async (activity) => {
         _pageSize: 99,
         items: []
       },
-      chart: {}
+      charts: {}
     };
 
     for (let i = 0; i < responses.length; i++) {
@@ -58,25 +58,49 @@ module.exports = async (activity) => {
       }
 
       // attach news array if news response
-      if (Array.isArray(response.body) && response.body[0].headline) {
+      if (Array.isArray(response.body) && response.body[0] && response.body[0].headline) {
         activity.Response.Data.news.items = convertNewsItems(response.body);
       }
 
       // construct and attach chart if history response
-      if (Array.isArray(response.body) && response.body[0].close) {
-        // If the response is intraday
-        if (response.body[0].minute) {
-          const date = new Date(response.body[0].date);
-          const today = new Date();
-
-          // only add the chart if it's today (stocks are open)
-          if (date.getDate() === today.getDate()) {
-            activity.Response.Data.chart = constructChart(response.body);
-            break;
-          }
-        } else {
-          // Use past month as chart when stocks aren't open
-          activity.Response.Data.chart = constructChart(response.body);
+      if (Array.isArray(response.body) && response.body[0] && response.body[0].close) {
+        // we know which chart it is from the position in the responses array
+        switch (i) {
+        // 1d
+        case 2:
+          activity.Response.Data.charts.oneDay = constructChart(response.body);
+          activity.Response.Data.charts.oneDay.show = true;
+          break;
+        // 1m
+        case 3:
+          activity.Response.Data.charts.oneMonth = constructChart(response.body);
+          activity.Response.Data.charts.oneMonth.show = false;
+          break;
+        // 3m
+        case 4:
+          activity.Response.Data.charts.threeMonth = constructChart(response.body);
+          activity.Response.Data.charts.threeMonth.show = false;
+          break;
+        // 6m
+        case 5:
+          activity.Response.Data.charts.sixMonth = constructChart(response.body);
+          activity.Response.Data.charts.sixMonth.show = false;
+          break;
+        // YTD
+        case 6:
+          activity.Response.Data.charts.yearToDate = constructChart(response.body);
+          activity.Response.Data.charts.yearToDate.show = false;
+          break;
+        // 1y
+        case 7:
+          activity.Response.Data.charts.oneYear = constructChart(response.body);
+          activity.Response.Data.charts.oneYear.show = false;
+          break;
+        // 5y
+        case 8:
+          activity.Response.Data.charts.fiveYear = constructChart(response.body);
+          activity.Response.Data.charts.fiveYear.show = false;
+          break;
         }
       }
     }
@@ -98,7 +122,7 @@ function constructChart(history) {
 
   return {
     template: 'line',
-    palette: 'office.Celestial6',
+    palette: 'office.Capital6',
     configuration: {
       data: {
         labels: labels,
