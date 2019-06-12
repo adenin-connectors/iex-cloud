@@ -1,0 +1,27 @@
+ConnectorTitle: iex-cloud
+AccessCodeServiceEndpoint: 
+AccessTokenServiceEndpoint: 
+ApiEndPoint: https://iex-cloud.com
+UserName: hide
+UserPassword: hide
+ClientId: hide
+ClientSecret: hide
+AccessCodeServiceUrl: hide
+AccessTokenServiceUrl: hide
+Personalized: !!bool true
+ApiKey: hide
+ServiceUrl: hide
+ServiceUrlHint: ''
+XML2JSON: hide
+ImpersonateOAuth: hide
+Interface: hide
+Custom1: required
+Custom1Label: Stock symbol
+Custom1Hint: 'e.g. "CSCO"'
+Custom2: required
+Custom2Label: IEX Cloud API Secret Token
+Custom3: hide
+Custom2Hint: 'Secret token from IEX Cloud'
+Custom3Label: Custom Field 3
+Custom3Hint: ''
+Scopes:

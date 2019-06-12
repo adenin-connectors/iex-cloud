@@ -1,0 +1,23 @@
+{
+  "name": "iex-cloud",
+  "version": "1.0.0",
+  "description": "iex-cloud-cloud-function",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "./node_modules/.bin/nodemon app.js"
+  },
+  "dependencies": {
+    "@adenin/cf-provider": "^2.6.4",
+    "agentkeepalive": "^4.0.2",
+    "got": "^9.6.0"
+  },
+  "devDependencies": {
+    "@adenin/cf-logger": "^1.6.1",
+    "decache": "^4.5.1",
+    "koa": "^2.7.0",
+    "koa-bodyparser": "^4.2.1",
+    "koa-router": "^7.4.0",
+    "nodemon": "^1.18.11"
+  }
+}
