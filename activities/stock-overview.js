@@ -21,7 +21,7 @@ module.exports = async (activity) => {
     promises.push(api(`/stock/${symbol}/intraday-prices?chartInterval=5&token=${token}`));
 
     // Get the stock history chart for past month
-    promises.push(api(`/stock/${symbol}/chart/1m?token=${token}`));
+    /*promises.push(api(`/stock/${symbol}/chart/1m?token=${token}`));
 
     promises.push(api(`/stock/${symbol}/chart/3m?chartInterval=5&token=${token}`));
 
@@ -31,7 +31,7 @@ module.exports = async (activity) => {
 
     promises.push(api(`/stock/${symbol}/chart/1y?chartInterval=15&token=${token}`));
 
-    promises.push(api(`/stock/${symbol}/chart/5y?chartInterval=75&token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/5y?chartInterval=75&token=${token}`));*/
 
     const responses = await Promise.all(promises);
 
@@ -68,8 +68,8 @@ module.exports = async (activity) => {
         switch (i) {
         // 1d
         case 2:
-          activity.Response.Data.charts.oneDay = constructChart(response.body);
-          activity.Response.Data.charts.oneDay.show = true;
+          activity.Response.Data.chart = constructChart(response.body);
+          //activity.Response.Data.charts.oneDay.show = true;
           break;
         // 1m
         case 3:
@@ -122,26 +122,58 @@ function constructChart(history) {
 
   return {
     template: 'line',
-    palette: 'office.Capital6',
+    palette: 'office.Depth6',
     configuration: {
       data: {
         labels: labels,
         datasets: [{
           data: data,
-          fill: false
+          fill: false,
+          pointRadius: 0,
+          pointHitRadius: 10
         }]
       },
       options: {
         legend: {
           display: false
         },
+        layout: {
+          padding: {
+            left: 15,
+            right: 25,
+            top: 5,
+            bottom: 25
+          }
+        },
         scales: {
           yAxes: [{
             position: 'left',
             ticks: {
-              beginAtZero: false
+              beginAtZero: false,
+              padding: 25,
+              fontColor: '#838b8b'
+            },
+            gridLines: {
+              drawBorder: false,
+              borderDash: [8, 8]
             }
-          }]
+          }],
+          xAxes: [
+            {
+              position: 'bottom',
+              display: false
+            },
+            {
+              position: 'top',
+              ticks: {
+                display: false
+              },
+              gridLines: {
+                display: false,
+                drawBorder: false
+              }
+            }
+          ]
         }
       }
     }
