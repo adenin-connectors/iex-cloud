@@ -20,10 +20,14 @@ function api(path, opts) {
     agent = _activity.Context.ProxyServer.agent;
   }
 
+  // determine if sandbox or not
+  const key = _activity.Context.connector.custom2.toLowerCase();
+  const endpoint = key.indexOf('tsk_') !== -1 ? 'https://sandbox.iexapis.com/v1' : 'https://cloud.iexapis.com/v1';
+
   opts = Object.assign({
     json: true,
     token: _activity.Context.connector.token,
-    endpoint: 'https://cloud.iexapis.com/v1',
+    endpoint: endpoint,
     agent: agent
   }, opts);
 

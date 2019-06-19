@@ -15,31 +15,24 @@ module.exports = async (activity) => {
     promises.push(api(`/stock/${symbol}/quote?token=${token}`));
 
     // Get the stock symbol news list
-    promises.push(api(`/stock/${symbol}/news?token=${token}`));
+    promises.push(api(`/stock/${symbol}/news/last/3?token=${token}`));
 
-    // Get the stock history chart for current date (every 30 mins)
-    promises.push(api(`/stock/${symbol}/intraday-prices?chartInterval=5&token=${token}`));
+    // Get the stock history chart for current date (yesterday if trading is closed)
+    promises.push(api(`/stock/${symbol}/intraday-prices?chartIEXOnly=true&token=${token}`));
 
-    // Get the stock history chart for past month
-    /*promises.push(api(`/stock/${symbol}/chart/1m?token=${token}`));
-
-    promises.push(api(`/stock/${symbol}/chart/3m?chartInterval=5&token=${token}`));
-
-    promises.push(api(`/stock/${symbol}/chart/6m?chartInterval=10&token=${token}`));
-
-    promises.push(api(`/stock/${symbol}/chart/ytd?chartInterval=10&token=${token}`));
-
-    promises.push(api(`/stock/${symbol}/chart/1y?chartInterval=15&token=${token}`));
-
-    promises.push(api(`/stock/${symbol}/chart/5y?chartInterval=75&token=${token}`));*/
+    // Get the stock history chart for every required range
+    promises.push(api(`/stock/${symbol}/chart/1m?chartCloseOnly=true&token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/3m?chartCloseOnly=true&token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/6m?chartCloseOnly=true&token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/ytd?chartCloseOnly=true&token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/1y?chartCloseOnly=true&token=${token}`));
+    promises.push(api(`/stock/${symbol}/chart/5y?chartCloseOnly=true&token=${token}`));
 
     const responses = await Promise.all(promises);
 
     activity.Response.Data = {
       quote: {},
       news: {
-        _page: 1,
-        _pageSize: 99,
         items: []
       },
       charts: {}
@@ -67,10 +60,14 @@ module.exports = async (activity) => {
         // we know which chart it is from the position in the responses array
         switch (i) {
         // 1d
-        case 2:
-          activity.Response.Data.chart = constructChart(response.body);
-          //activity.Response.Data.charts.oneDay.show = true;
+        case 2: {
+          const oneDay = constructChart(response.body);
+
+          activity.Response.Data.charts.current = oneDay;
+          activity.Response.Data.charts.oneDay = oneDay;
+          activity.Response.Data.charts.oneDay.show = true;
           break;
+        }
         // 1m
         case 3:
           activity.Response.Data.charts.oneMonth = constructChart(response.body);
@@ -115,8 +112,14 @@ function constructChart(history) {
 
   for (let i = 0; i < history.length; i++) {
     const day = history[i];
+    let label = day.label;
 
-    labels.push(day.label);
+    if (!label) {
+      const today = (new Date(day.date)).toString().split(' ');
+      label = `${today[1]} ${today[2]}`;
+    }
+
+    labels.push(label);
     data.push(day.close);
   }
 
@@ -140,7 +143,7 @@ function constructChart(history) {
         layout: {
           padding: {
             left: 15,
-            right: 25,
+            right: 35,
             top: 5,
             bottom: 25
           }
@@ -150,6 +153,7 @@ function constructChart(history) {
             position: 'left',
             ticks: {
               beginAtZero: false,
+              maxTicksLimit: 3,
               padding: 25,
               fontColor: '#838b8b'
             },
@@ -166,7 +170,11 @@ function constructChart(history) {
             {
               position: 'top',
               ticks: {
-                display: false
+                display: true,
+                maxRotation: 0,
+                maxTicksLimit: 3,
+                padding: 10,
+                fontColor: '#838b8b'
               },
               gridLines: {
                 display: false,
