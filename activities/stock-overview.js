@@ -125,7 +125,10 @@ function constructChart(history) {
 
   return {
     template: 'line',
-    palette: 'office.Depth6',
+    dimensions: {
+      width: 400,
+      height: 225
+    },
     configuration: {
       data: {
         labels: labels,
@@ -133,7 +136,8 @@ function constructChart(history) {
           data: data,
           fill: false,
           pointRadius: 0,
-          pointHitRadius: 10
+          pointHitRadius: 10,
+          borderColor: 'rgba(20, 167, 146, 1)'
         }]
       },
       options: {
@@ -155,7 +159,7 @@ function constructChart(history) {
               beginAtZero: false,
               maxTicksLimit: 3,
               padding: 25,
-              fontColor: '#838b8b'
+              fontColor: '#9b9b9b'
             },
             gridLines: {
               drawBorder: false,
@@ -174,7 +178,7 @@ function constructChart(history) {
                 maxRotation: 0,
                 maxTicksLimit: 3,
                 padding: 10,
-                fontColor: '#838b8b'
+                fontColor: '#9b9b9b'
               },
               gridLines: {
                 display: false,
