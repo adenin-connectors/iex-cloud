@@ -1,34 +1,22 @@
 'use strict';
 
+const fs = require('fs');
+const {promisify} = require('util');
+const {sep} = require('path');
+
+const exists = promisify(fs.exists);
+const readFile = promisify(fs.readFile);
+const writeFile = promisify(fs.writeFile);
+
 const api = require('./common/api');
 
 module.exports = async (activity) => {
   try {
     api.initialize(activity);
 
+    const cacheFolder = activity.Context.CacheFolder;
     const symbol = activity.Context.connector.custom1;
     const token = activity.Context.connector.custom2;
-
-    const promises = [];
-
-    // Get the current stock quote
-    promises.push(api(`/stock/${symbol}/quote?token=${token}`));
-
-    // Get the stock symbol news list
-    promises.push(api(`/stock/${symbol}/news/last/3?token=${token}`));
-
-    // Get the stock history chart for current date (yesterday if trading is closed)
-    promises.push(api(`/stock/${symbol}/intraday-prices?chartIEXOnly=true&token=${token}`));
-
-    // Get the stock history chart for every required range
-    promises.push(api(`/stock/${symbol}/chart/1m?chartCloseOnly=true&token=${token}`));
-    promises.push(api(`/stock/${symbol}/chart/3m?chartCloseOnly=true&token=${token}`));
-    promises.push(api(`/stock/${symbol}/chart/6m?chartCloseOnly=true&token=${token}`));
-    promises.push(api(`/stock/${symbol}/chart/ytd?chartCloseOnly=true&token=${token}`));
-    promises.push(api(`/stock/${symbol}/chart/1y?chartCloseOnly=true&token=${token}`));
-    promises.push(api(`/stock/${symbol}/chart/5y?chartCloseOnly=true&token=${token}`));
-
-    const responses = await Promise.all(promises);
 
     activity.Response.Data = {
       quote: {},
@@ -38,68 +26,124 @@ module.exports = async (activity) => {
       charts: {}
     };
 
-    for (let i = 0; i < responses.length; i++) {
-      const response = responses[i];
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const date = now.getDate();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
 
-      // fail error
-      if ($.isErrorResponse(activity, response)) return;
+    const perMinute = `${cacheFolder}${sep}${symbol}-${year}${month}${date}${hour}${minute}.json`;
 
-      // attach stock quote if quote response
-      if (response.body.symbol) {
-        activity.Response.Data.quote = response.body;
-        activity.Response.Data.quote.date = new Date(response.body.latestUpdate);
-      }
+    if (await exists(perMinute)) {
+      const file = await readFile(perMinute);
 
-      // attach news array if news response
-      if (Array.isArray(response.body) && response.body[0] && response.body[0].headline) {
-        activity.Response.Data.news.items = convertNewsItems(response.body);
-      }
+      activity.Response.Data = JSON.parse(file);
+    } else {
+      const promises = [];
 
-      // construct and attach chart if history response
-      if (Array.isArray(response.body) && response.body[0] && response.body[0].close) {
-        // we know which chart it is from the position in the responses array
-        switch (i) {
-        // 1d
-        case 2: {
+      promises.push(api(`/stock/${symbol}/quote?token=${token}`));
+      promises.push(api(`/stock/${symbol}/news/last/3?token=${token}`));
+      promises.push(api(`/stock/${symbol}/intraday-prices?chartIEXOnly=true&token=${token}`));
+
+      const responses = await Promise.all(promises);
+
+      for (let i = 0; i < responses.length; i++) {
+        const response = responses[i];
+
+        if ($.isErrorResponse(activity, response)) return;
+
+        if (response.body.symbol) {
+          activity.Response.Data.quote = response.body;
+          activity.Response.Data.quote.date = new Date(response.body.latestUpdate);
+        }
+
+        if (Array.isArray(response.body) && response.body[0] && response.body[0].headline) {
+          activity.Response.Data.news.items = convertNewsItems(response.body);
+        }
+
+        if (Array.isArray(response.body) && response.body[0] && response.body[0].close) {
           const oneDay = constructChart(response.body);
 
           activity.Response.Data.charts.current = oneDay;
           activity.Response.Data.charts.oneDay = oneDay;
           activity.Response.Data.charts.oneDay.show = true;
-          break;
-        }
-        // 1m
-        case 3:
-          activity.Response.Data.charts.oneMonth = constructChart(response.body);
-          activity.Response.Data.charts.oneMonth.show = false;
-          break;
-        // 3m
-        case 4:
-          activity.Response.Data.charts.threeMonth = constructChart(response.body);
-          activity.Response.Data.charts.threeMonth.show = false;
-          break;
-        // 6m
-        case 5:
-          activity.Response.Data.charts.sixMonth = constructChart(response.body);
-          activity.Response.Data.charts.sixMonth.show = false;
-          break;
-        // YTD
-        case 6:
-          activity.Response.Data.charts.yearToDate = constructChart(response.body);
-          activity.Response.Data.charts.yearToDate.show = false;
-          break;
-        // 1y
-        case 7:
-          activity.Response.Data.charts.oneYear = constructChart(response.body);
-          activity.Response.Data.charts.oneYear.show = false;
-          break;
-        // 5y
-        case 8:
-          activity.Response.Data.charts.fiveYear = constructChart(response.body);
-          activity.Response.Data.charts.fiveYear.show = false;
-          break;
         }
       }
+
+      const data = JSON.stringify(activity.Response.Data);
+
+      if (!await exists(perMinute)) await writeFile(perMinute, data);
+    }
+
+    const perDay = `${cacheFolder}${sep}${symbol}-YTD-${year}${month}${date - 1}.json`;
+
+    if (await exists(perDay)) {
+      const file = await readFile(perDay);
+      const data = JSON.parse(file);
+
+      activity.Response.Data.charts.oneMonth = data.oneMonth;
+      activity.Response.Data.charts.threeMonth = data.threeMonth;
+      activity.Response.Data.charts.sixMonth = data.sixMonth;
+      activity.Response.Data.charts.yearToDate = data.yearToDate;
+      activity.Response.Data.charts.oneYear = data.oneYear;
+      activity.Response.Data.charts.fiveYear = data.fiveYear;
+    } else {
+      const promises = [];
+
+      promises.push(api(`/stock/${symbol}/chart/1m?chartCloseOnly=true&token=${token}`));
+      promises.push(api(`/stock/${symbol}/chart/3m?chartCloseOnly=true&token=${token}`));
+      promises.push(api(`/stock/${symbol}/chart/6m?chartCloseOnly=true&token=${token}`));
+      promises.push(api(`/stock/${symbol}/chart/ytd?chartCloseOnly=true&token=${token}`));
+      promises.push(api(`/stock/${symbol}/chart/1y?chartCloseOnly=true&token=${token}`));
+      promises.push(api(`/stock/${symbol}/chart/5y?chartCloseOnly=true&token=${token}`));
+
+      const responses = await Promise.all(promises);
+
+      for (let i = 0; i < responses.length; i++) {
+        const response = responses[i];
+
+        if ($.isErrorResponse(activity, response)) return;
+
+        if (Array.isArray(response.body) && response.body[0] && response.body[0].close) {
+          switch (i) {
+          // 1m
+          case 0:
+            activity.Response.Data.charts.oneMonth = constructChart(response.body);
+            activity.Response.Data.charts.oneMonth.show = false;
+            break;
+            // 3m
+          case 1:
+            activity.Response.Data.charts.threeMonth = constructChart(response.body);
+            activity.Response.Data.charts.threeMonth.show = false;
+            break;
+            // 6m
+          case 2:
+            activity.Response.Data.charts.sixMonth = constructChart(response.body);
+            activity.Response.Data.charts.sixMonth.show = false;
+            break;
+            // YTD
+          case 3:
+            activity.Response.Data.charts.yearToDate = constructChart(response.body);
+            activity.Response.Data.charts.yearToDate.show = false;
+            break;
+            // 1y
+          case 4:
+            activity.Response.Data.charts.oneYear = constructChart(response.body);
+            activity.Response.Data.charts.oneYear.show = false;
+            break;
+            // 5y
+          case 5:
+            activity.Response.Data.charts.fiveYear = constructChart(response.body);
+            activity.Response.Data.charts.fiveYear.show = false;
+            break;
+          }
+        }
+      }
+
+      const data = JSON.stringify(activity.Response.Data.charts);
+
+      if (!await exists(perDay)) await writeFile(perDay, data);
     }
   } catch (error) {
     $.handleError(activity, error);
