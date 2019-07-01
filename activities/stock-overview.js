@@ -7,6 +7,7 @@ const {sep} = require('path');
 const exists = promisify(fs.exists);
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
+const unlink = promisify(fs.unlink);
 
 const api = require('./common/api');
 
@@ -28,10 +29,10 @@ module.exports = async (activity) => {
 
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const date = now.getDate();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
+    const month = String(now.getMonth() + 1).length < 2 ? '0' + String(now.getMonth() + 1) : now.getMonth() + 1;
+    const date = String(now.getDate()).length < 2 ? '0' + String(now.getDate()) : now.getDate();
+    const hour = String(now.getHours()).length < 2 ? '0' + String(now.getHours()) : now.getHours();
+    const minute = String(now.getMinutes()).length < 2 ? '0' + String(now.getMinutes()) : now.getMinutes();
 
     const perMinute = `${cacheFolder}${sep}${symbol}-${year}${month}${date}${hour}${minute}.json`;
 
@@ -73,10 +74,36 @@ module.exports = async (activity) => {
 
       const data = JSON.stringify(activity.Response.Data);
 
-      if (!await exists(perMinute)) await writeFile(perMinute, data);
+      // check it hasn't been written
+      if (!await exists(perMinute)) {
+        try {
+          await writeFile(perMinute, data);
+        } catch (error) { /* may have just been written, in which case do nothing */ }
+      }
+
+      // we keep 3 recent files, delete 3 mins ago
+      const now = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
+      const old = new Date(now);
+
+      old.setMinutes(now.getMinutes() - 3);
+
+      const oldYear = old.getFullYear();
+      const oldMonth = String(old.getMonth() + 1).length < 2 ? '0' + String(old.getMonth() + 1) : old.getMonth() + 1;
+      const oldDate = String(old.getDate()).length < 2 ? '0' + String(old.getDate()) : old.getDate();
+      const oldHour = String(old.getHours()).length < 2 ? '0' + String(old.getHours()) : old.getHours();
+      const oldMinute = String(old.getMinutes()).length < 2 ? '0' + String(old.getMinutes()) : old.getMinutes();
+
+      const oldFile = `${cacheFolder}${sep}${symbol}-${oldYear}${oldMonth}${oldDate}${oldHour}${oldMinute}.json`;
+
+      // check it actually exists
+      if (await exists(oldFile)) {
+        try {
+          await unlink(oldFile);
+        } catch (error) { /* may have just been deleted, in which case do nothing */ }
+      }
     }
 
-    const perDay = `${cacheFolder}${sep}${symbol}-YTD-${year}${month}${date - 1}.json`;
+    const perDay = `${cacheFolder}${sep}${symbol}-YTD-${year}${month}${date}.json`;
 
     if (await exists(perDay)) {
       const file = await readFile(perDay);
@@ -143,7 +170,31 @@ module.exports = async (activity) => {
 
       const data = JSON.stringify(activity.Response.Data.charts);
 
-      if (!await exists(perDay)) await writeFile(perDay, data);
+      // check it hasn't already been written
+      if (!await exists(perDay)) {
+        try {
+          await writeFile(perDay, data);
+        } catch (error) { /* might have just been written, in which case ignore */ }
+      }
+
+      // we keep 3 recent files, delete 3 days ago
+      const now = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
+      const old = new Date(now);
+
+      old.setDate(now.getDate() - 3);
+
+      const oldYear = old.getFullYear();
+      const oldMonth = String(old.getMonth() + 1).length < 2 ? '0' + String(old.getMonth() + 1) : old.getMonth() + 1;
+      const oldDate = String(old.getDate()).length < 2 ? '0' + String(old.getDate()) : old.getDate();
+
+      const oldFile = `${cacheFolder}${sep}${symbol}-YTD-${oldYear}${oldMonth}${oldDate}.json`;
+
+      // check it actually exists
+      if (await exists(oldFile)) {
+        try {
+          await unlink(oldFile);
+        } catch (error) { /* may have just been deleted, in which case ignore */ }
+      }
     }
   } catch (error) {
     $.handleError(activity, error);
