@@ -168,7 +168,17 @@ module.exports = async (activity) => {
         }
       }
 
-      const data = JSON.stringify(activity.Response.Data.charts);
+      // strip out the charts that may have come from first request, they don't need caching again
+      const historicalCharts = {
+        oneMonth: activity.Response.Data.charts.oneMonth,
+        threeMonth: activity.Response.Data.charts.threeMonth,
+        sixMonth: activity.Response.Data.charts.sixMonth,
+        yearToDate: activity.Response.Data.charts.yearToDate,
+        oneYear: activity.Response.Data.charts.oneYear,
+        fiveYear: activity.Response.Data.charts.fiveYear
+      };
+
+      const data = JSON.stringify(historicalCharts);
 
       // check it hasn't already been written
       if (!await exists(perDay)) {
