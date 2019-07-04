@@ -69,6 +69,7 @@ module.exports = async (activity) => {
           activity.Response.Data.charts.current = oneDay;
           activity.Response.Data.charts.oneDay = oneDay;
           activity.Response.Data.charts.oneDay.show = true;
+          activity.Response.Data.charts.initialKey = 'oneDay';
         }
       }
 
@@ -139,27 +140,27 @@ module.exports = async (activity) => {
             activity.Response.Data.charts.oneMonth = constructChart(response.body);
             activity.Response.Data.charts.oneMonth.show = false;
             break;
-            // 3m
+          // 3m
           case 1:
             activity.Response.Data.charts.threeMonth = constructChart(response.body);
             activity.Response.Data.charts.threeMonth.show = false;
             break;
-            // 6m
+          // 6m
           case 2:
             activity.Response.Data.charts.sixMonth = constructChart(response.body);
             activity.Response.Data.charts.sixMonth.show = false;
             break;
-            // YTD
+          // YTD
           case 3:
             activity.Response.Data.charts.yearToDate = constructChart(response.body);
             activity.Response.Data.charts.yearToDate.show = false;
             break;
-            // 1y
+          // 1y
           case 4:
             activity.Response.Data.charts.oneYear = constructChart(response.body);
             activity.Response.Data.charts.oneYear.show = false;
             break;
-            // 5y
+          // 5y
           case 5:
             activity.Response.Data.charts.fiveYear = constructChart(response.body);
             activity.Response.Data.charts.fiveYear.show = false;
@@ -205,6 +206,13 @@ module.exports = async (activity) => {
           await unlink(oldFile);
         } catch (error) { /* may have just been deleted, in which case ignore */ }
       }
+    }
+
+    // handle when there's no intraday
+    if (!activity.Response.Data.charts.oneDay) {
+      activity.Response.Data.charts.current = activity.Response.Data.charts.oneMonth;
+      activity.Response.Data.charts.oneMonth.show = true;
+      activity.Response.Data.charts.initialKey = 'oneMonth';
     }
   } catch (error) {
     $.handleError(activity, error);
