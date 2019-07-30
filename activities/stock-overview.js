@@ -55,8 +55,17 @@ module.exports = async (activity) => {
         if ($.isErrorResponse(activity, response)) return;
 
         if (response.body.symbol) {
-          activity.Response.Data.quote = response.body;
-          activity.Response.Data.quote.date = new Date(response.body.latestUpdate);
+          const quote = response.body;
+
+          if (quote.latestPrice) quote.latestPrice = quote.latestPrice.toFixed(2);
+          if (quote.change) quote.change = quote.change.toFixed(2);
+          if (quote.changePercent) quote.changePercent = quote.changePercent.toFixed(2);
+          if (quote.extendedChange) quote.extendedChange = quote.extendedChange.toFixed(2);
+          if (quote.extendedChangePercent) quote.extendedChangePercent = quote.extendedChangePercent.toFixed(2);
+
+          quote.date = new Date(response.body.latestUpdate);
+
+          activity.Response.Data.quote = quote;
         }
 
         if (Array.isArray(response.body) && response.body[0] && response.body[0].headline) {
@@ -214,6 +223,16 @@ module.exports = async (activity) => {
       activity.Response.Data.charts.oneMonth.show = true;
       activity.Response.Data.charts.initialKey = 'oneMonth';
     }
+
+    if (activity.Request.Data.args && activity.Request.Data.args.selected) {
+      if (activity.Response.Data.charts.oneDay) activity.Response.Data.charts.oneDay.show = false;
+
+      activity.Response.Data.charts.oneMonth.show = false;
+
+      activity.Response.Data.charts.current = activity.Response.Data.charts[activity.Request.Data.args.selected];
+      activity.Response.Data.charts[activity.Request.Data.args.selected].show = true;
+      activity.Response.Data.charts.initialKey = activity.Request.Data.args.selected;
+    }
   } catch (error) {
     $.handleError(activity, error);
   }
@@ -250,7 +269,9 @@ function constructChart(history) {
           fill: false,
           pointRadius: 0,
           pointHitRadius: 10,
-          borderColor: 'rgba(20, 167, 146, 1)'
+          borderColor: 'rgba(20, 167, 146, 1)',
+          pointBackgroundColor: 'rgba(20, 167, 146, 1)',
+          pointBorderColor: 'rgba(20, 167, 146, 1)'
         }]
       },
       options: {
