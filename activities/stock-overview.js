@@ -271,7 +271,8 @@ function constructChart(history) {
           pointHitRadius: 10,
           borderColor: 'rgba(20, 167, 146, 1)',
           pointBackgroundColor: 'rgba(20, 167, 146, 1)',
-          pointBorderColor: 'rgba(20, 167, 146, 1)'
+          pointBorderColor: 'rgba(20, 167, 146, 1)',
+          spanGaps: true
         }]
       },
       options: {
