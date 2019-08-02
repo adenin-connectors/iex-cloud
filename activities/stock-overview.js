@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 'use strict';
 
 const fs = require('fs');
@@ -28,11 +29,11 @@ module.exports = async (activity) => {
     };
 
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).length < 2 ? '0' + String(now.getMonth() + 1) : now.getMonth() + 1;
-    const date = String(now.getDate()).length < 2 ? '0' + String(now.getDate()) : now.getDate();
-    const hour = String(now.getHours()).length < 2 ? '0' + String(now.getHours()) : now.getHours();
-    const minute = String(now.getMinutes()).length < 2 ? '0' + String(now.getMinutes()) : now.getMinutes();
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).length < 2 ? '0' + String(now.getUTCMonth() + 1) : now.getUTCMonth() + 1;
+    const date = String(now.getUTCDate()).length < 2 ? '0' + String(now.getUTCDate()) : now.getUTCDate();
+    const hour = String(now.getUTCHours()).length < 2 ? '0' + String(now.getUTCHours()) : now.getUTCHours();
+    const minute = String(now.getUTCMinutes()).length < 2 ? '0' + String(now.getUTCMinutes()) : now.getUTCMinutes();
 
     const perMinute = `${cacheFolder}${sep}${symbol}-${year}${month}${date}${hour}${minute}.json`;
 
@@ -95,13 +96,13 @@ module.exports = async (activity) => {
       const now = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
       const old = new Date(now);
 
-      old.setMinutes(now.getMinutes() - 3);
+      old.setUTCMinutes(now.getUTCMinutes() - 3);
 
-      const oldYear = old.getFullYear();
-      const oldMonth = String(old.getMonth() + 1).length < 2 ? '0' + String(old.getMonth() + 1) : old.getMonth() + 1;
-      const oldDate = String(old.getDate()).length < 2 ? '0' + String(old.getDate()) : old.getDate();
-      const oldHour = String(old.getHours()).length < 2 ? '0' + String(old.getHours()) : old.getHours();
-      const oldMinute = String(old.getMinutes()).length < 2 ? '0' + String(old.getMinutes()) : old.getMinutes();
+      const oldYear = old.getUTCFullYear();
+      const oldMonth = String(old.getUTCMonth() + 1).length < 2 ? '0' + String(old.getUTCMonth() + 1) : old.getUTCMonth() + 1;
+      const oldDate = String(old.getUTCDate()).length < 2 ? '0' + String(old.getUTCDate()) : old.getUTCDate();
+      const oldHour = String(old.getUTCHours()).length < 2 ? '0' + String(old.getUTCHours()) : old.getUTCHours();
+      const oldMinute = String(old.getUTCMinutes()).length < 2 ? '0' + String(old.getUTCMinutes()) : old.getUTCMinutes();
 
       const oldFile = `${cacheFolder}${sep}${symbol}-${oldYear}${oldMonth}${oldDate}${oldHour}${oldMinute}.json`;
 
@@ -201,11 +202,11 @@ module.exports = async (activity) => {
       const now = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
       const old = new Date(now);
 
-      old.setDate(now.getDate() - 3);
+      old.setUTCDate(now.getUTCDate() - 3);
 
-      const oldYear = old.getFullYear();
-      const oldMonth = String(old.getMonth() + 1).length < 2 ? '0' + String(old.getMonth() + 1) : old.getMonth() + 1;
-      const oldDate = String(old.getDate()).length < 2 ? '0' + String(old.getDate()) : old.getDate();
+      const oldYear = old.getUTCFullYear();
+      const oldMonth = String(old.getUTCMonth() + 1).length < 2 ? '0' + String(old.getUTCMonth() + 1) : old.getUTCMonth() + 1;
+      const oldDate = String(old.getUTCDate()).length < 2 ? '0' + String(old.getUTCDate()) : old.getUTCDate();
 
       const oldFile = `${cacheFolder}${sep}${symbol}-YTD-${oldYear}${oldMonth}${oldDate}.json`;
 
