@@ -9,6 +9,7 @@ const exists = promisify(fs.exists);
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
+const rename = promisify(fs.rename);
 
 const api = require('./common/api');
 
@@ -88,21 +89,22 @@ module.exports = async (activity) => {
       // check it hasn't been written
       if (!await exists(perMinute)) {
         try {
-          await writeFile(perMinute, data);
+          await writeFile(perMinute.replace('.json', '-new.json'), data);
+          await rename(perMinute.replace('.json', '-new.json'), perMinute);
         } catch (error) { /* may have just been written, in which case do nothing */ }
       }
 
       // we keep 3 recent files, delete 3 mins ago
-      const now = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
-      const old = new Date(now);
+      const utcNow = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
+      const old = new Date(utcNow);
 
-      old.setUTCMinutes(now.getUTCMinutes() - 3);
+      old.setMinutes(utcNow.getMinutes() - 3);
 
-      const oldYear = old.getUTCFullYear();
-      const oldMonth = String(old.getUTCMonth() + 1).length < 2 ? '0' + String(old.getUTCMonth() + 1) : old.getUTCMonth() + 1;
-      const oldDate = String(old.getUTCDate()).length < 2 ? '0' + String(old.getUTCDate()) : old.getUTCDate();
-      const oldHour = String(old.getUTCHours()).length < 2 ? '0' + String(old.getUTCHours()) : old.getUTCHours();
-      const oldMinute = String(old.getUTCMinutes()).length < 2 ? '0' + String(old.getUTCMinutes()) : old.getUTCMinutes();
+      const oldYear = old.getFullYear();
+      const oldMonth = String(old.getMonth() + 1).length < 2 ? '0' + String(old.getMonth() + 1) : old.getMonth() + 1;
+      const oldDate = String(old.getDate()).length < 2 ? '0' + String(old.getDate()) : old.getDate();
+      const oldHour = String(old.getHours()).length < 2 ? '0' + String(old.getHours()) : old.getHours();
+      const oldMinute = String(old.getMinutes()).length < 2 ? '0' + String(old.getMinutes()) : old.getMinutes();
 
       const oldFile = `${cacheFolder}${sep}${symbol}-${oldYear}${oldMonth}${oldDate}${oldHour}${oldMinute}.json`;
 
@@ -194,19 +196,20 @@ module.exports = async (activity) => {
       // check it hasn't already been written
       if (!await exists(perDay)) {
         try {
-          await writeFile(perDay, data);
+          await writeFile(perDay.replace('.json', '-new.json'), data);
+          await rename(perDay.replace('.json', '-new.json'), perDay);
         } catch (error) { /* might have just been written, in which case ignore */ }
       }
 
       // we keep 3 recent files, delete 3 days ago
-      const now = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
-      const old = new Date(now);
+      const utcNow = new Date(`${year}-${month}-${date}T${hour}:${minute}:00`);
+      const old = new Date(utcNow);
 
-      old.setUTCDate(now.getUTCDate() - 3);
+      old.setDate(utcNow.getDate() - 3);
 
-      const oldYear = old.getUTCFullYear();
-      const oldMonth = String(old.getUTCMonth() + 1).length < 2 ? '0' + String(old.getUTCMonth() + 1) : old.getUTCMonth() + 1;
-      const oldDate = String(old.getUTCDate()).length < 2 ? '0' + String(old.getUTCDate()) : old.getUTCDate();
+      const oldYear = old.getFullYear();
+      const oldMonth = String(old.getMonth() + 1).length < 2 ? '0' + String(old.getMonth() + 1) : old.getMonth() + 1;
+      const oldDate = String(old.getDate()).length < 2 ? '0' + String(old.getDate()) : old.getDate();
 
       const oldFile = `${cacheFolder}${sep}${symbol}-YTD-${oldYear}${oldMonth}${oldDate}.json`;
 
