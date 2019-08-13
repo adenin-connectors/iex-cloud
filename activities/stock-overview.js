@@ -61,9 +61,9 @@ module.exports = async (activity) => {
 
           if (quote.latestPrice) quote.latestPrice = quote.latestPrice.toFixed(2);
           if (quote.change) quote.change = quote.change.toFixed(2);
-          if (quote.changePercent) quote.changePercent = quote.changePercent.toFixed(2);
+          if (quote.changePercent) quote.changePercent = (quote.changePercent * 100).toFixed(2);
           if (quote.extendedChange) quote.extendedChange = quote.extendedChange.toFixed(2);
-          if (quote.extendedChangePercent) quote.extendedChangePercent = quote.extendedChangePercent.toFixed(2);
+          if (quote.extendedChangePercent) quote.extendedChangePercent = (quote.extendedChangePercent * 100).toFixed(2);
 
           quote.date = new Date(response.body.latestUpdate);
 
@@ -228,7 +228,7 @@ module.exports = async (activity) => {
       activity.Response.Data.charts.initialKey = 'oneMonth';
     }
 
-    if (activity.Request.Data.args && activity.Request.Data.args.selected) {
+    if (activity.Request.Data.args && activity.Request.Data.args.selected && activity.Response.Data.charts[activity.Request.Data.args.selected]) {
       if (activity.Response.Data.charts.oneDay) activity.Response.Data.charts.oneDay.show = false;
 
       activity.Response.Data.charts.oneMonth.show = false;
