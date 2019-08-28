@@ -26,7 +26,10 @@ module.exports = async (activity) => {
       news: {
         items: []
       },
-      charts: {}
+      charts: {},
+      _card: {
+        expanded: false
+      }
     };
 
     const now = new Date();
@@ -54,7 +57,14 @@ module.exports = async (activity) => {
       for (let i = 0; i < responses.length; i++) {
         const response = responses[i];
 
-        if ($.isErrorResponse(activity, response)) return;
+        if ($.isErrorResponse(activity, response)) {
+          if ($.getObjPath(activity.Request, 'Data.args.atAgentAction') === 'refresh') {
+            activity.Response.ErrorCode = 0;
+            activity.Response.Data = {};
+          }
+
+          return;
+        }
 
         if (response.body.symbol) {
           const quote = response.body;
@@ -143,7 +153,14 @@ module.exports = async (activity) => {
       for (let i = 0; i < responses.length; i++) {
         const response = responses[i];
 
-        if ($.isErrorResponse(activity, response)) return;
+        if ($.isErrorResponse(activity, response)) {
+          if ($.getObjPath(activity.Request, 'Data.args.atAgentAction') === 'refresh') {
+            activity.Response.ErrorCode = 0;
+            activity.Response.Data = {};
+          }
+
+          return;
+        }
 
         if (Array.isArray(response.body) && response.body[0] && response.body[0].close) {
           switch (i) {
