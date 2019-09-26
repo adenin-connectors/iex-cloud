@@ -99,8 +99,9 @@ module.exports = async (activity) => {
       // check it hasn't been written
       if (!await exists(perMinute)) {
         try {
-          await writeFile(perMinute.replace('.json', '-new.json'), data);
-          await rename(perMinute.replace('.json', '-new.json'), perMinute);
+          const hash = Math.random().toString(36).substring(7);
+          await writeFile(perMinute.replace('.json', `-${hash}.json`), data);
+          await rename(perMinute.replace('.json', `-${hash}.json`), perMinute);
         } catch (error) { /* may have just been written, in which case do nothing */ }
       }
 
@@ -213,8 +214,9 @@ module.exports = async (activity) => {
       // check it hasn't already been written
       if (!await exists(perDay)) {
         try {
-          await writeFile(perDay.replace('.json', '-new.json'), data);
-          await rename(perDay.replace('.json', '-new.json'), perDay);
+          const hash = Math.random().toString(36).substring(7);
+          await writeFile(perDay.replace('.json', `-${hash}.json`), data);
+          await rename(perDay.replace('.json', `-${hash}.json`), perDay);
         } catch (error) { /* might have just been written, in which case ignore */ }
       }
 
